@@ -1,11 +1,248 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Matrix
 {
-    class Matrix
+    internal class Matrix
     {
+        public static (List<int[]>, bool) ParseMatrix()
+        {
+            Console.WriteLine("Вводите матрицу построчно, разделяя числа пробелом");
+            Console.WriteLine("После ввода отправьте пустую строку");
+            var s = Console.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var len = s.Length;
+            var matrix = new List<int[]> {new int[len]};
+            for (var i = 0; i < len; i++)
+                matrix[0][i] = int.Parse(s[i]);
+
+            var row = 1;
+
+            while (s.Length > 0)
+            {
+                s = Console.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                if (s.Length == 0)
+                    break;
+
+                if (s.Length != len)
+                {
+                    Console.WriteLine("Введена строка неверной длины!");
+                    return (matrix, false);
+                }
+
+                matrix.Add(new int[len]);
+
+                for (var j = 0; j < len; j++)
+                    matrix[row][j] = int.Parse(s[j]);
+
+                row++;
+            }
+
+            return (matrix, true);
+        }
+
+        public static int Determinant(List<int[]> matrix, int dimension)
+        {
+            if (dimension == 1)
+                return matrix[0][0];
+            if (dimension == 2)
+                return matrix[0][0] * matrix[1][1] - matrix[1][0] * matrix[0][1];
+
+            var k = 1;
+            var determinant = 0;
+
+            for (var i = 0; i < dimension; i++)
+            {
+                var p = GetMinorMatrix(matrix, i, 0, dimension);
+                determinant += k * matrix[i][0] * Determinant(p, dimension - 1);
+                k = -k;
+            }
+
+            return determinant;
+        }
+
+        private static List<int[]> GetMinorMatrix(List<int[]> matrix, int i, int j, int dimension)
+        {
+            var minorMatrix = new List<int[]>();
+            var di = 0;
+
+            for (var ki = 0; ki < dimension - 1; ki++)
+            {
+                if (ki == i)
+                    di = 1;
+
+                var dj = 0;
+                minorMatrix.Add(new int[dimension]);
+
+                for (var kj = 0; kj < dimension - 1; kj++)
+                {
+                    if (kj == j)
+                        dj = 1;
+                    minorMatrix[ki][kj] = matrix[ki + di][kj + dj];
+                }
+            }
+
+            return minorMatrix;
+        }
+
+
+        public static (double, List<int[]>, bool) Inverse(List<int[]> mat)
+        {
+            var alliedMat = new List<int[]>();
+
+            if (mat.Count != mat[0].Length)
+            {
+                Console.WriteLine("Матрица не квадратная!");
+                return (0.0, new List<int[]>(), false);
+            }
+
+            var det = Determinant(mat, mat.Count);
+            if (det == 0)
+            {
+                Console.WriteLine("Определитель равен нулю!");
+                return (0.0, new List<int[]>(), false);
+            }
+
+            for (var i = 0; i < mat.Count; i++)
+            {
+                alliedMat.Add(new int[mat.Count]);
+                for (var j = 0; j < mat.Count; j++)
+                {
+                    var p = GetMinorMatrix(mat, i, j, mat.Count);
+                    var minDet = Determinant(p, mat.Count - 1);
+                    alliedMat[i][j] = (i + j) % 2 == 0 ? minDet : -minDet;
+                }
+            }
+
+            var transposed = GetTransposed(alliedMat);
+
+            return (det, transposed, true);
+        }
+
+        public static void PrintInverse(double det, List<int[]> transposed)
+        {
+            Console.WriteLine("Обратная матрица");
+
+            for (var i = 0; i < transposed.Count; i++)
+            {
+                for (var j = 0; j < transposed.Count; j++)
+                {
+                    var divided = Math.Round(transposed[i][j] / det, 3);
+                    if (Math.Abs(divided) == 0.0)
+                        divided = 0.0;
+                    Console.Write(divided + " ");
+                }
+
+                Console.WriteLine();
+            }
+        }
+
+        public static List<int[]> GetTransposed(List<int[]> mat)
+        {
+            var result = new List<int[]>();
+            var len = mat.Count;
+            for (var i = 0; i < len; i++)
+                result.Add(new int[len]);
+
+            for (var i = 0; i < len; i++)
+            for (var j = 0; j < len; j++)
+                result[j][i] = mat[i][j];
+
+            return result;
+        }
+
+        public static (int[,], bool) HandleMultiply(List<int[]> matrix)
+        {
+            Console.WriteLine("Введите вектор-строку или вектор-столбец");
+            Console.WriteLine("Вводите вектор-строку, разделяя числа пробелом");
+            Console.WriteLine("Вводите вектор-столбец, отправляя по одному числу в строке");
+            Console.WriteLine("После ввода вектора отправьте пустую строку");
+            Console.WriteLine("Учтите, что вектор-строка может быть умножен " +
+                              "только на матрицу, являющуюся вектром-столбцом");
+
+            var s = Console.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var len = s.Length;
+            
+            // Проеверка граничных случаев
+            if (len == 0)
+                return (new int[0, 0], false);
+
+            if (len > 1)
+            {
+                // матрица = вектор-столбец
+                if (matrix.Count == len && matrix[0].Length == 1)
+                    return HorMultiply(matrix, s);
+
+                Console.WriteLine("Введен вектор неверной длины!");
+                return (new int[0, 0], false);
+            }
+
+            // матрица = вектор-столбец
+            if (len == 1 && matrix.Count == 1 && matrix[0].Length == 1)
+                return HorMultiply(matrix, s);
+
+            // в общем случае
+            var vector = new List<string>();
+            vector.Add(s[0]);
+
+            while (s.Length > 0)
+            {
+                s = Console.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                if (s.Length == 0)
+                    break;
+
+                if (s.Length != 1)
+                {
+                    Console.WriteLine("Некорректный ввод вектора!");
+                    break;
+                }
+
+                vector.Add(s[0]);
+            }
+
+            if (vector.Count == matrix[0].Length)
+                return VerMultiply(matrix, vector.ToArray());
+            Console.WriteLine("Введен вектор неверной длины!");
+
+            return (new int[0, 0], false);
+        }
+
+        public static (int[,], bool) HorMultiply(List<int[]> mat, string[] vector)
+        {
+            var result = new int[mat.Count, vector.Length];
+
+            for (var i = 0; i < mat.Count; i++)
+            for (var j = 0; j < vector.Length; j++)
+                result[i, j] = mat[i][0] * int.Parse(vector[j]);
+
+            return (result, true);
+        }
+
+        public static (int[,], bool) VerMultiply(List<int[]> mat, string[] vector)
+        {
+            var result = new int[vector.Length, 1];
+
+            for (var i = 0; i < mat.Count; i++)
+            for (var j = 0; j < mat[i].Length; j++)
+                result[i, 0] += mat[i][j] * int.Parse(vector[j]);
+
+            return (result, true);
+        }
+
+        public static void PrintMultiply(int[,] result)
+        {
+            Console.WriteLine("Результат умножения");
+
+            for (var i = 0; i < result.GetLength(0); i++)
+            {
+                for (var j = 0; j < result.GetLength(1); j++)
+                    Console.Write(result[i, j] + " ");
+                Console.WriteLine();
+            }
+        }
+
         public static (List<char>, List<string>, List<int[]>, bool) ParseSystem()
         {
             Console.WriteLine("Введите систему построчно без пробелов");
@@ -15,7 +252,7 @@ namespace Matrix
             var b = new List<string>();
             var a = new List<int[]>();
             var k = new Dictionary<int, Dictionary<char, int>>();
-         
+
             var i = 0;
             var s = Console.ReadLine().Split('=', StringSplitOptions.RemoveEmptyEntries);
 
@@ -91,11 +328,11 @@ namespace Matrix
             return (x, b, a, true);
         }
 
-        public static (Dictionary<char, double>, bool) SolveSystem(List<char> x, 
+        public static (Dictionary<char, double>, bool) SolveSystem(List<char> x,
             List<string> b, List<int[]> a)
         {
             var inverseResult = Inverse(a);
-
+            
             if (!inverseResult.Item3)
             {
                 Console.WriteLine("Систему однозначно решить не получилось");
@@ -127,248 +364,6 @@ namespace Matrix
             Console.WriteLine("Результат решения системы");
             foreach (var letter in solved.Keys)
                 Console.WriteLine(letter + " = " + solved[letter]);
-        }
-
-        public static (List<int[]>, bool) ParseMatrix()
-        {
-            Console.WriteLine("Вводите матрицу построчно, разделяя числа пробелом");
-            Console.WriteLine("После ввода отправьте пустую строку");
-            var s = Console.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var len = s.Length;
-            var matrix = new List<int[]>() { new int[len] };
-            for (var i = 0; i < len; i++)
-                matrix[0][i] = int.Parse(s[i]);
-
-            var row = 1;
-
-            while (s.Length > 0)
-            {
-                s = Console.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                if (s.Length == 0)
-                    break;
-
-                if (s.Length != len)
-                {
-                    Console.WriteLine("Введена строка неверной длины!");
-                    return (matrix, false);
-                }
-
-                matrix.Add(new int[len]);
-
-                for (var j = 0; j < len; j++)
-                    matrix[row][j] = int.Parse(s[j]);
-
-                row++;
-            }
-
-            return (matrix, true);
-        }
-
-        public static int Determinant(List<int[]> mat, int m)
-        {              
-            if (m == 1)
-                return mat[0][0];
-            else if (m == 2)
-                return mat[0][0] * mat[1][1] - (mat[1][0] * mat[0][1]);
-
-            var k = 1;
-            var d = 0;
-
-            for (var i = 0; i < m; i++)
-            {
-                var p = GetMinorMatrix(mat, i, 0, m);
-                d += k * mat[i][0] * Determinant(p, m - 1);
-                k = -k;
-            }
-
-            return d;
-        }
-
-        private static List<int[]> GetMinorMatrix(List<int[]> mat, int i, int j, int m)
-        {
-            var p = new List<int[]>();
-            var di = 0;
-
-            for (var ki = 0; ki < m - 1; ki++)
-            {
-                if (ki == i)
-                    di = 1;
-
-                var dj = 0;
-                p.Add(new int[m]);
-
-                for (var kj = 0; kj < m - 1; kj++)
-                {
-                    if (kj == j)
-                        dj = 1;
-                    p[ki][kj] = mat[ki + di][kj + dj];
-                }
-            }
-
-            return p;
-        }
-
-        public static (int[,], bool) VerMultiply(List<int[]> mat, string[] vector)
-        {
-            var result = new int[vector.Length, 1];
-
-            for (var i = 0; i < mat.Count; i++)
-            {
-                result[i, 0] = 0;
-
-                for (var j = 0; j < mat[i].Length; j++)
-                    result[i, 0] += mat[i][j] * int.Parse(vector[j]);
-            }
-
-            return (result, true);
-        }
-
-        public static (int[,], bool) HorMultiply(List<int[]> mat, string[] vector)
-        {
-            var result = new int[mat.Count, vector.Length];
-
-            for (var i = 0; i < mat.Count; i++)
-            {
-                for (var j = 0; j < vector.Length; j++)
-                    result[i, j] = mat[i][0] * int.Parse(vector[j]);
-            }
-
-            return (result, true);
-        }
-
-        public static (int[,], bool) HandleMultiply(List<int[]> mat)
-        {
-            Console.WriteLine("Введите вектор-строку или вектор-столбец");
-            Console.WriteLine("Вводите вектор-строку, разделяя числа пробелом");
-            Console.WriteLine("Вводите вектор-столбец, отправляя по одному числу в строке");
-            Console.WriteLine("После ввода вектора отправьте пустую строку");
-            Console.WriteLine("Учтите, что вектор-строка может быть умножен " +
-                "только на матрицу, являющуюся вектром-столбцом");
-
-            var s = Console.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var len = s.Length;
-
-            if (len == 0)
-                return (new int[0, 0], false);
-            else if (len > 1)
-            {
-                if (mat.Count == len && mat[0].Length == 1)
-                {
-                    return HorMultiply(mat, s);
-                }
-                else
-                {
-                    Console.WriteLine("Введен вектор неверной длины!");
-                    return (new int[0, 0], false);
-                }
-            }
-            else if (len == 1 && mat.Count == 1 && mat[0].Length == 1)
-            {
-                return HorMultiply(mat, s);
-            }
-
-            var vector = new List<string>();
-            vector.Add(s[0]);
-
-            while (s.Length > 0)
-            {
-                s = Console.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                if (s.Length == 0)
-                    break;
-
-                if (s.Length != 1)
-                {
-                    Console.WriteLine("Некорректный ввод вектора!");
-                    break;
-                }
-
-                vector.Add(s[0]);
-            }
-
-            if (vector.Count == mat[0].Length)
-                return VerMultiply(mat, vector.ToArray());
-            else
-                Console.WriteLine("Введен вектор неверной длины!");
-
-            return (new int[0, 0], false);
-        }
-
-        public static void PrintMultiply(int[,] result)
-        {
-            Console.WriteLine("Результат умножения");
-
-            for (var i = 0; i < result.GetLength(0); i++)
-            {
-                for (var j = 0; j < result.GetLength(1); j++)
-                    Console.Write(result[i, j] + " ");
-                Console.WriteLine();
-            }
-        }
-
-        public static (double, List<int[]>, bool) Inverse(List<int[]> mat)
-        {
-            var alliedMat = new List<int[]>();
-
-            if (mat.Count != mat[0].Length)
-            {
-                Console.WriteLine("Матрица не квадратная!");
-                return (0.0, new List<int[]>(), false);
-            }
-
-            var det = Determinant(mat, mat.Count);
-            if (det == 0)
-            {
-                Console.WriteLine("Определитель равен нулю!");
-                return (0.0, new List<int[]>(), false);
-            }
-
-            for (var i = 0; i < mat.Count; i++)
-            {
-                alliedMat.Add(new int[mat.Count]);
-                for (var j = 0; j < mat.Count; j++)
-                {
-                    var p = GetMinorMatrix(mat, i, j, mat.Count);
-                    var minDet = Determinant(p, mat.Count - 1);
-                    alliedMat[i][j] = (i + j) % 2 == 0 ? minDet : -minDet;
-                }
-            }
-
-            var transposed = GetTransposed(alliedMat);
-
-            return (det, transposed, true);
-        }
-
-        public static void PrintInverse(double det, List<int[]> transposed)
-        {
-            Console.WriteLine("Обратная матрица");
-
-            for (var i = 0; i < transposed.Count; i++)
-            {
-                for (var j = 0; j < transposed.Count; j++)
-                {
-                    var divided = Math.Round(transposed[i][j] / det, 3);
-                    if (Math.Abs(divided) == 0.0)
-                        divided = 0.0;
-                    Console.Write(divided + " ");
-                }
-                Console.WriteLine();
-            }
-        }
-
-        public static List<int[]> GetTransposed(List<int[]> mat)
-        {
-            var result = new List<int[]>();
-            var len = mat.Count;
-            for (var i = 0; i < len; i++)
-                result.Add(new int[len]);
-
-            for (var i = 0; i < len; i++)
-                for (var j = 0; j < len; j++)
-                    result[j][i] = mat[i][j];
-
-            return result;
         }
     }
 }

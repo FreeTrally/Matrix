@@ -1,5 +1,5 @@
-﻿using NUnit.Framework;
-using System;
+﻿using System;
+using NUnit.Framework;
 
 namespace MatrixTest
 {
@@ -43,28 +43,28 @@ namespace MatrixTest
             3 1
             2 2 
             0 3
-        ", new string[] { "-1", "1", "0", "2" },
-           new string[] { "-3 3 0 6", "-2 2 0 4", "0 0 0 0", "-1 1 0 2" }, false)]
+        ", new[] {"-1", "1", "0", "2"},
+            new[] {"-3 3 0 6", "-2 2 0 4", "0 0 0 0", "-1 1 0 2"}, false)]
         [TestCase(@"
             3 2
             2 2 
             0 1
             -1 0
-        ", new string[] { "-1", "1", "0"},
-           new string[] { "-3 3 0 6", "-2 2 0 4", "0 0 0 0", "-1 1 0 2" }, false)]
+        ", new[] {"-1", "1", "0"},
+            new[] {"-3 3 0 6", "-2 2 0 4", "0 0 0 0", "-1 1 0 2"}, false)]
         [TestCase(@"
             3
             2
-        ", new string[] { "-1", "1"},
-           new string[] { "-3 3", "-2 2"}, true)]
+        ", new[] {"-1", "1"},
+            new[] {"-3 3", "-2 2"}, true)]
         [TestCase(@"
             3
             2
             0
             1
-        ", new string[] {"-1", "1", "0", "2" }, 
-           new string[] {"-3 3 0 6", "-2 2 0 4", "0 0 0 0", "-1 1 0 2" }, true)]
-        public void HorMultiplyWorksCorrectly(string input, string[] vector,  
+        ", new[] {"-1", "1", "0", "2"},
+            new[] {"-3 3 0 6", "-2 2 0 4", "0 0 0 0", "-1 1 0 2"}, true)]
+        public void HorMultiplyWorksCorrectly(string input, string[] vector,
             string[] multExpected, bool isCorrect)
         {
             var matParse = TestParsers.MatrixTestParser(input);
@@ -92,26 +92,26 @@ namespace MatrixTest
             2 4 0
             -2 1 3
             -1 0 1
-        ", new string[] { "1", "2", "-1" },
-           new string[] { "10", "-3", "-2" }, true)]
+        ", new[] {"1", "2", "-1"},
+            new[] {"10", "-3", "-2"}, true)]
         [TestCase(@"
             2 4
             -2 1
-        ", new string[] { "1", "2", "-1" },
-           new string[] { "10", "-3", "-2" }, false)]
+        ", new[] {"1", "2", "-1"},
+            new[] {"10", "-3", "-2"}, false)]
         [TestCase(@"
             2 4 0
             -2 1 3
             -1 0 1
-        ", new string[] { "1", "2" },
-           new string[] { "10", "-3", "-2" }, false)]
+        ", new[] {"1", "2"},
+            new[] {"10", "-3", "-2"}, false)]
         [TestCase(@"
             2 4 0
             -2 1 3
             -1 0 1
-        ", new string[] { "0", "0", "0" },
-           new string[] { "0", "0", "0" }, true)]
-        public void VerMultiplyWorksCorrectly(string input, string[] vector, 
+        ", new[] {"0", "0", "0"},
+            new[] {"0", "0", "0"}, true)]
+        public void VerMultiplyWorksCorrectly(string input, string[] vector,
             string[] multExpected, bool isCorrect)
         {
             var matParse = TestParsers.MatrixTestParser(input);
@@ -139,21 +139,21 @@ namespace MatrixTest
         [TestCase(@"
             2 3
             3 3
-        ", -3, new string[] { "3 -3", "-3 2"}, true)]
+        ", -3, new[] {"3 -3", "-3 2"}, true)]
         [TestCase(@"
             3 3
             3 3
-        ", -3, new string[] { "3 -3", "-3 2" }, false)]
+        ", -3, new[] {"3 -3", "-3 2"}, false)]
         [TestCase(@"
             2 3 3 
             3 3 3
-        ", -3, new string[] { "3 -3", "-3 2" }, false)]
+        ", -3, new[] {"3 -3", "-3 2"}, false)]
         [TestCase(@"
             2 3 3
             2 3 1
             4 2 2
-        ", -16, new string[] { "4 0 -6", "0 -8 4", "-8 8 0" }, true)]
-        public void InverseWorksCorrectly(string input, double detExpected, 
+        ", -16, new[] {"4 0 -6", "0 -8 4", "-8 8 0"}, true)]
+        public void InverseWorksCorrectly(string input, double detExpected,
             string[] invExpected, bool isCorrect)
         {
             var matParse = TestParsers.MatrixTestParser(input);
@@ -171,7 +171,7 @@ namespace MatrixTest
                 Assert.AreEqual(inv.Item3, isCorrect);
                 return;
             }
-            
+
             Assert.AreEqual(inv.Item1, detExpected);
 
             var invMatrix = inv.Item2;
@@ -189,25 +189,25 @@ namespace MatrixTest
             2x+3y+2z=9
             x+2y-3z=14
             3x+4y+z=16
-        ", new char[] { 'x', 'y', 'z' }, new double[] { 2, 3, -2 }, true)]
+        ", new[] {'x', 'y', 'z'}, new double[] {2, 3, -2}, true)]
         [TestCase(@"
             2x+3y+2z=9
             x+2y-3z=14
             3x+4y+z=16
             x+y=1
-        ", new char[] { 'x', 'y', 'z' }, new double[] { 2, 3, -2 }, false)]
+        ", new[] {'x', 'y', 'z'}, new double[] {2, 3, -2}, false)]
         [TestCase(@"
             2x+3y+2z=9
             x+2y-3z=14
-        ", new char[] { 'x', 'y', 'z' }, new double[] { 2, 3, -2 }, false)]
+        ", new[] {'x', 'y', 'z'}, new double[] {2, 3, -2}, false)]
         [TestCase(@"
             -x-2y=4
             -y+x=10
-        ", new char[] { 'x', 'y' }, new double[] { 5.333, -4.667 }, true)]
+        ", new[] {'x', 'y'}, new[] {5.333, -4.667}, true)]
         [TestCase(@"
             -x=0
-        ", new char[] { 'x' }, new double[] { 0.0 }, true)]
-        public void SolveSystemWorksCorrectly(string input, char[] sysLetters, 
+        ", new[] {'x'}, new[] {0.0}, true)]
+        public void SolveSystemWorksCorrectly(string input, char[] sysLetters,
             double[] sysVals, bool isCorrect)
         {
             var sysParse = TestParsers.SysTestParser(input);
@@ -221,7 +221,7 @@ namespace MatrixTest
             var sys = Matrix.Matrix.SolveSystem(sysParse.x, sysParse.b, sysParse.a);
 
             Assert.AreEqual(sys.Item2, isCorrect);
-            
+
             for (var i = 0; i < sysVals.Length; i++)
                 Assert.AreEqual(sys.Item1[sysLetters[i]], sysVals[i]);
         }
